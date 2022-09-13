@@ -5,6 +5,10 @@ from numpy import random
 # (math, random, collections, functools, etc. are perfectly fine)
 
 
+import numpy as np 
+import pandas as pd
+from numpy import random
+
 class KMeans:
     
     def __init__(self, K= 2, max_iterations= 100):
@@ -24,10 +28,12 @@ class KMeans:
         """
         # TODO: Implement
         # Randomly select centroid start points, uniformly distributed across the domain of the dataset
-        
         X = X.to_numpy()
+        
         min, max = np.min(X, axis=0), np.max(X, axis=0)
         self.centroids = [random.uniform(min, max) for i in range(self.K)]
+        
+      
         
         iteration = 0
         prev_centroids = None
@@ -37,17 +43,17 @@ class KMeans:
             sorted_points = [[] for k in range(self.K)]
             
             for x in X:
-                distances = euclidean_distance(x, self.centroids)
+                distances = [euclidean_distance(x, centroid) for centroid in self.centroids]
                 centroid_index = np.argmin(distances)
                 sorted_points[centroid_index].append(x)
             
-            #set previous centroids to current centroids
+           
             prev_centroids = self.centroids
             
-            #recalculate new centroids
+           
             self.centroids = [np.mean(points, axis=0) for points in sorted_points]
             
-            #check if any centroids are empty
+        
             for i, centroid in enumerate(self.centroids):
                 if np.isnan(centroid).any():
                     self.centroids[i] = prev_centroids[i]
@@ -73,17 +79,19 @@ class KMeans:
             could be: array([2, 0, 0, 1, 2, 1, 1, 0, 2, 2])
         """
         # TODO: Implement
-        
         X = X.to_numpy()
+        
         centroids = []
-        centroid_idxs = []
+        centroid_indexes = []
         
         for x in X:
-            distances = euclidean_distance(x, self.centroids)
+            distances = [euclidean_distance(x, centroid) for centroid in self.centroids]
+            
             centroid_index = np.argmin(distances)
             centroids.append(self.centroids[centroid_index])
-            centroid_idxs.append(centroid_index)
-        return centroids, centroid_index
+            centroid_indexes.append(centroid_index)
+        
+        return centroid_indexes
         
         
         
@@ -103,8 +111,7 @@ class KMeans:
             [xm_1, xm_2, ..., xm_n]
         ])
         """
-        return self.centroids
-    
+        return np.array(self.centroids)
 # --- Some utility functions 
 
 
