@@ -1,15 +1,19 @@
 import numpy as np 
-import pandas as pd 
+import pandas as pd
 # IMPORTANT: DO NOT USE ANY OTHER 3RD PARTY PACKAGES
 # (math, random, collections, functools, etc. are perfectly fine)
 
 
 class KMeans:
     
-    def __init__(self):
+    def __init__(self, K= 2, max_iterations= 100):
         # NOTE: Feel free add any hyperparameters 
         # (with defaults) as you see fit
-        pass
+        self.K = K
+        self.max_iterations = max_iterations
+        self.clusters = [[] for i in range(self.K)]
+        self.centroids = []
+        
         
     def fit(self, X):
         """
@@ -39,12 +43,50 @@ class KMeans:
             could be: array([2, 0, 0, 1, 2, 1, 1, 0, 2, 2])
         """
         # TODO: Implement 
-        raise NotImplementedError()
+        self.X = X
+        self.num_samples, self.num_features = X.shape
+        
+        #initialize centroids
+        random_sample_indixes = np.random.choice(self.num_samples, self.K, replace=False)
+        self.centroids = [self.X[index] for index in random_sample_indixes]
+        
+        #optimize centroids
+        for i in range(self.max_iterations):
+            self.clusters = self.create_clusters(self.centroids)
+            centroids_old = self.centroids
+            self.centroids = self.get_centroids(self.clusters)
+            if self.is_converged(centroids_old, self.centroids):
+                break
+        return self.get_cluster_labels(self.clusters)
+            
     
-    def get_centroids(self):
+    def create_clusters(self, centroids):
+        clusters = [[] for i in range(self.K)]
+        for index, sample in enumerate(self.X):
+            centroid_index = self.get_closest_centroid(sample, centroids)
+            clusters[centroid_index].append(index)
+        return clusters
+    
+    def get_closest_centroid(self, sample, centroids):
+        distances = [euclidean_distance(sample, centroid_point) for centroid_point in centroids]
+        closest_index = np.argmin(distances)
+        return closest_index
+    
+    def is_converged(self, centroids_old, centroids):
+        distances = [euclidean_distance(centroids_old[i], centroids[i]) for i in range(self.K)]
+        return sum(distances) == 0
+    
+    def get_cluster_labels(self, clusters):
+        labels = np.empty(self.num_samples)
+        for cluster_index, cluster in enumerate(clusters):
+            for sample_index in cluster:
+                labels[sample_index] = cluster_index
+        return labels
+    
+    def get_centroids(self, clusters):
         """
         Returns the centroids found by the K-mean algorithm
-        
+
         Example with m centroids in an n-dimensional space:
         >>> model.get_centroids()
         numpy.array([
@@ -56,11 +98,11 @@ class KMeans:
             [xm_1, xm_2, ..., xm_n]
         ])
         """
-        # TODO: Implement 
-        raise NotImplementedError()
-    
-    
-    
+        centroids = np.zeros((self.K, self.num_features))
+        for cluster_index, cluster in enumerate(clusters):
+            cluster_mean = np.mean(self.X[cluster], axis=0)
+            centroids[cluster_index] = cluster_mean
+        return centroids
     
 # --- Some utility functions 
 
