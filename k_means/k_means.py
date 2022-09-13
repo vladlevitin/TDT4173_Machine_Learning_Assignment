@@ -33,12 +33,9 @@ class KMeans:
         min, max = np.min(X, axis=0), np.max(X, axis=0)
         self.centroids = [random.uniform(min, max) for i in range(self.K)]
         
-      
-        
         iteration = 0
-        prev_centroids = None
-        
-        while np.not_equal(self.centroids, prev_centroids).any() and iteration < self.max_iterations:
+       
+        while iteration < self.max_iterations:
             
             sorted_points = [[] for k in range(self.K)]
             
@@ -47,16 +44,10 @@ class KMeans:
                 centroid_index = np.argmin(distances)
                 sorted_points[centroid_index].append(x)
             
-           
-            prev_centroids = self.centroids
-            
+         
            
             self.centroids = [np.mean(points, axis=0) for points in sorted_points]
-            
         
-            for i, centroid in enumerate(self.centroids):
-                if np.isnan(centroid).any():
-                    self.centroids[i] = prev_centroids[i]
             
             iteration += 1
         
@@ -81,14 +72,13 @@ class KMeans:
         # TODO: Implement
         X = X.to_numpy()
         
-        centroids = []
         centroid_indexes = []
         
         for x in X:
             distances = [euclidean_distance(x, centroid) for centroid in self.centroids]
             
             centroid_index = np.argmin(distances)
-            centroids.append(self.centroids[centroid_index])
+            
             centroid_indexes.append(centroid_index)
         
         return centroid_indexes
