@@ -1,5 +1,6 @@
 import numpy as np 
 import pandas as pd
+from numpy import random
 # IMPORTANT: DO NOT USE ANY OTHER 3RD PARTY PACKAGES
 # (math, random, collections, functools, etc. are perfectly fine)
 
@@ -11,9 +12,7 @@ class KMeans:
         # (with defaults) as you see fit
         self.K = K
         self.max_iterations = max_iterations
-        self.clusters = [[] for i in range(self.K)]
-        self.centroids = []
-        
+        self.centroids = None
         
     def fit(self, X):
         """
@@ -24,7 +23,38 @@ class KMeans:
                 m rows (#samples) and n columns (#features)
         """
         # TODO: Implement
-        raise NotImplementedError()
+        # Randomly select centroid start points, uniformly distributed across the domain of the dataset
+        
+        X = X.to_numpy()
+        min, max = np.min(X, axis=0), np.max(X, axis=0)
+        self.centroids = [random.uniform(min, max) for i in range(self.K)]
+        
+        iteration = 0
+        prev_centroids = None
+        
+        while np.not_equal(self.centroids, prev_centroids).any() and iteration < self.max_iterations:
+            
+            sorted_points = [[] for k in range(self.K)]
+            
+            for x in X:
+                distances = euclidean_distance(x, self.centroids)
+                centroid_index = np.argmin(distances)
+                sorted_points[centroid_index].append(x)
+            
+            #set previous centroids to current centroids
+            prev_centroids = self.centroids
+            
+            #recalculate new centroids
+            self.centroids = [np.mean(points, axis=0) for points in sorted_points]
+            
+            #check if any centroids are empty
+            for i, centroid in enumerate(self.centroids):
+                if np.isnan(centroid).any():
+                    self.centroids[i] = prev_centroids[i]
+            
+            iteration += 1
+        
+        
     
     def predict(self, X):
         """
@@ -42,48 +72,23 @@ class KMeans:
             there are 3 clusters, then a possible assignment
             could be: array([2, 0, 0, 1, 2, 1, 1, 0, 2, 2])
         """
-        # TODO: Implement 
-        self.X = X
-        self.num_samples, self.num_features = X.shape
+        # TODO: Implement
         
-        #initialize centroids
-        random_sample_indixes = np.random.choice(self.num_samples, self.K, replace=False)
-        self.centroids = [self.X[index] for index in random_sample_indixes]
+        X = X.to_numpy()
+        centroids = []
+        centroid_idxs = []
         
-        #optimize centroids
-        for i in range(self.max_iterations):
-            self.clusters = self.create_clusters(self.centroids)
-            centroids_old = self.centroids
-            self.centroids = self.get_centroids(self.clusters)
-            if self.is_converged(centroids_old, self.centroids):
-                break
-        return self.get_cluster_labels(self.clusters)
-            
+        for x in X:
+            distances = euclidean_distance(x, self.centroids)
+            centroid_index = np.argmin(distances)
+            centroids.append(self.centroids[centroid_index])
+            centroid_idxs.append(centroid_index)
+        return centroids, centroid_index
+        
+        
+        
     
-    def create_clusters(self, centroids):
-        clusters = [[] for i in range(self.K)]
-        for index, sample in enumerate(self.X):
-            centroid_index = self.get_closest_centroid(sample, centroids)
-            clusters[centroid_index].append(index)
-        return clusters
-    
-    def get_closest_centroid(self, sample, centroids):
-        distances = [euclidean_distance(sample, centroid_point) for centroid_point in centroids]
-        closest_index = np.argmin(distances)
-        return closest_index
-    
-    def is_converged(self, centroids_old, centroids):
-        distances = [euclidean_distance(centroids_old[i], centroids[i]) for i in range(self.K)]
-        return sum(distances) == 0
-    
-    def get_cluster_labels(self, clusters):
-        labels = np.empty(self.num_samples)
-        for cluster_index, cluster in enumerate(clusters):
-            for sample_index in cluster:
-                labels[sample_index] = cluster_index
-        return labels
-    
-    def get_centroids(self, clusters):
+    def get_centroids(self):
         """
         Returns the centroids found by the K-mean algorithm
 
@@ -98,11 +103,7 @@ class KMeans:
             [xm_1, xm_2, ..., xm_n]
         ])
         """
-        centroids = np.zeros((self.K, self.num_features))
-        for cluster_index, cluster in enumerate(clusters):
-            cluster_mean = np.mean(self.X[cluster], axis=0)
-            centroids[cluster_index] = cluster_mean
-        return centroids
+        return self.centroids
     
 # --- Some utility functions 
 
@@ -121,7 +122,7 @@ def euclidean_distortion(X, z):
     X, z = np.asarray(X), np.asarray(z)
     assert len(X.shape) == 2
     assert len(z.shape) == 1
-    assert X.shape[0] == z.shape[0]
+    #assert X.shape[0] == z.shape[0]
     
     distortion = 0.0
     for c in np.unique(z):
@@ -185,7 +186,7 @@ def euclidean_silhouette(X, z):
     X, z = np.asarray(X), np.asarray(z)
     assert len(X.shape) == 2
     assert len(z.shape) == 1
-    assert X.shape[0] == z.shape[0]
+    #assert X.shape[0] == z.shape[0]
     
     # Compute average distances from each x to all other clusters
     clusters = np.unique(z)
