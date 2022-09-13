@@ -101,6 +101,3 @@ def entropy(counts):
     probs = counts / counts.sum()
     probs = probs[probs > 0]  # Avoid log(0)
     return - np.sum(probs * np.log2(probs))
-
-
-

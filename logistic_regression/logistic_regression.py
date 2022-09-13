@@ -6,10 +6,15 @@ import pandas as pd
 
 class LogisticRegression:
     
-    def __init__(self):
+    def __init__(self, learning_rate=0.01, max_iter=1000):
         # NOTE: Feel free add any hyperparameters 
         # (with defaults) as you see fit
-        pass
+        self.learning_rate = learning_rate
+        self.max_iter = max_iter
+        self.weights = None
+        self.bias = None
+        
+        
         
     def fit(self, X, y):
         """
@@ -21,8 +26,20 @@ class LogisticRegression:
             y (array<m>): a vector of floats containing 
                 m binary 0.0/1.0 labels
         """
-        # TODO: Implement
-        raise NotImplemented()
+        
+        n_samples, n_features = X.shape
+        self.weights = np.zeros(n_features)
+        self.bias = 0
+        
+        for i in range(self.max_iter):
+            linear_model = np.dot(X, self.weights) + self.bias
+            y_perdicted = self.sigmoid(linear_model)
+            
+            dw = (1 / n_samples) * np.dot(X.T, (y_perdicted - y))
+            db = (1 / n_samples) * np.sum(y_perdicted - y)
+            
+            self.weights -= self.learning_rate * dw
+            self.bias -= self.learning_rate * db
     
     def predict(self, X):
         """
@@ -39,8 +56,26 @@ class LogisticRegression:
             with probability-like predictions
         """
         # TODO: Implement
-        raise NotImplemented()
+        linear_model = np.dot(X, self.weights) + self.bias
+        y_predicted = self.sigmoid(linear_model)
+        y_predicted_classes = [1 if i > 0.5 else 0 for i in y_predicted]
+        return np.array(y_predicted_classes)
+    
+    def sigmoid(self, x):
+        """
+        Applies the logistic function element-wise
         
+        Hint: highly related to cross-entropy loss 
+        
+        Args:
+            x (float or array): input to the logistic function
+                the function is vectorized, so it is acceptible
+                to pass an array of any shape.
+        
+        Returns:
+            Element-wise sigmoid activations of the input 
+        """
+        return 1 / (1 + np.exp(-x))
 
         
 # --- Some utility functions 
@@ -73,7 +108,7 @@ def binary_cross_entropy(y_true, y_pred, eps=1e-15):
     Returns:
         Binary cross entropy averaged over the input elements
     """
-    assert y_true.shape == y_pred.shape
+
     y_pred = np.clip(y_pred, eps, 1 - eps)  # Avoid log(0)
     return - np.mean(
         y_true * np.log(y_pred) + 
